@@ -27,6 +27,7 @@
     "test:dev": "lb-mocha --allow-console-logs dist/__tests__/**/*.js && npm run posttest",
     "docker:build": "docker build -t atez-challenge .",
     "docker:run": "docker run -p 3000:3000 -d atez-challenge",
+    "docker-compose:up": "docker-compose up --build",
     "premigrate": "npm run build",
     "migrate": "node ./dist/migrate",
     "preopenapi-spec": "npm run build",
@@ -55,6 +56,7 @@
     "@loopback/rest": "^14.0.6",
     "@loopback/rest-explorer": "^7.0.6",
     "@loopback/service-proxy": "^7.0.6",
+    "dotenv": "^16.4.5",
     "loopback-connector-postgresql": "^7.1.5",
     "tslib": "^2.0.0"
   },
@@ -62,6 +64,7 @@
     "@loopback/build": "^11.0.6",
     "@loopback/eslint-config": "^15.0.4",
     "@loopback/testlab": "^7.0.6",
+    "@types/dotenv": "^8.2.0",
     "@types/node": "^16.18.101",
     "eslint": "^8.57.0",
     "source-map-support": "^0.5.21",
