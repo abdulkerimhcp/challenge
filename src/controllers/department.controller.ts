@@ -1,16 +1,52 @@
+import {authenticate} from '@loopback/authentication';
 import {inject} from '@loopback/core';
 import {repository} from '@loopback/repository';
 import {
   del,
   get,
+  OperationObject,
   param,
   post,
   put,
   requestBody
 } from '@loopback/rest';
+import {logger} from '../logger';
 import {Department} from '../models';
 import {DepartmentRepository} from '../repositories';
 import {AverageSalaryService} from '../services/average-salary.services';
+
+const averageSalaryOperation: OperationObject = {
+  description: 'Get the average salary for each department, including employee data',
+  summary: 'Average salary per department',
+  responses: {
+    '200': {
+      description: 'List of departments with their average salary',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                department: {
+                  type: 'object',
+                  properties: {
+                    id: {type: 'number'},
+                    name: {type: 'string'},
+                  },
+                },
+                avgSalary: {type: 'number'},
+              },
+            },
+          },
+        },
+      },
+    },
+    '401': {
+      description: 'Unauthorized access - JWT required',
+    },
+  },
+};
 
 export class DepartmentController {
   constructor(
@@ -20,6 +56,7 @@ export class DepartmentController {
     public averageSalaryService: AverageSalaryService,
   ) { }
 
+  @authenticate('jwt')
   @post('/departments')
   async createDepartment(
     @requestBody() departmentData: Department,
@@ -27,24 +64,31 @@ export class DepartmentController {
     return this.departmentRepository.create(departmentData);
   }
 
-
+  @authenticate('jwt')
   @get('/departments')
   async findAllDepartments(): Promise<Department[]> {
+
     return this.departmentRepository.find({
       include: ['manager', "employees"],
     });
   }
-
-  @get('/departments/average-salary')
+  @authenticate('jwt')
+  @get('/departments/average-salary', averageSalaryOperation)
   async getDepartmensAvgSalary(): Promise<any> {
     const departments = await this.departmentRepository.find({
       include: ["employees"],
     });
 
-    const departmentsAvgSalaryList = await Promise.all(departments.map(async department => {
-      return {department: {id: department.id, name: department.name}, avgSalary: await this.averageSalaryService.calculate(department.employees)}
-    }))
-    return departmentsAvgSalaryList
+    const departmentsAvgSalaryList = await Promise.all(
+      departments.map(async (department) => {
+        return {
+          department: {id: department.id, name: department.name},
+          avgSalary: await this.averageSalaryService.calculate(department.employees),
+        };
+      })
+    );
+    logger.info('Run Average Salary Service')
+    return departmentsAvgSalaryList;
   }
 
   @get('/departments/{id}')
